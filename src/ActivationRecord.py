@@ -23,5 +23,5 @@ class ActivationRecord:
             # TODO: Add parameters
             # for variables in self.function.get_parameters():
             #     pass
-        self.instructions.append(Comment('...'))
+            self.instructions.append(Comment('...'))
         return self.instructions
