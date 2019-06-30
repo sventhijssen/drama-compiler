@@ -6,9 +6,9 @@ class FunctionCall:
 	def __init__(self, name, arguments):
 		self.name = name
 		self.arguments = arguments
-		self.stack = Stack()
+		self.instructions = []
 
-	def compile(self):
+	def get_instructions(self):
 		"""
 		Calling a method consists of the steps:
 		a) Save R0, R1 ... if necessary
@@ -24,14 +24,18 @@ class FunctionCall:
 		:return:
 		"""
 
-		# d) Set up environment
-		self.stack.push(Instruction(opcode="BST", acc="R8", comment='vorige R8'))
-		self.stack.push(Instruction(opcode="HIA", acc="R8", operand="R9", comment='omgeving opzetten'))
+		if self.name == 'getint':
+			self.instructions.append(Instruction(opcode='LEZ', comment='getint()'))
+		elif self.name == 'printint':
+			self.instructions.append(Instruction(opcode='DRU'))
+		else:
+			# d) Set up environment
+			self.instructions.append(Instruction(opcode="BST", acc="R8", comment='vorige R8'))
+			self.instructions.append(Instruction(opcode="HIA", acc="R8", operand="R9", comment='omgeving opzetten'))
 
-		# e) Go to subroutine (SBR)
-		self.stack.push(Instruction(opcode="SBR", name=self.name))
+			# e) Go to subroutine (SBR)
+			self.instructions.append(Instruction(opcode="SBR", name=self.name))
 
-		# f) Recover environment
-		self.stack.push(Instruction(opcode="HST", acc="R8", comment='omgeving herstellen'))
-
-		pass
+			# f) Recover environment
+			self.instructions.append(Instruction(opcode="HST", acc="R8", comment='omgeving herstellen'))
+		return self.instructions

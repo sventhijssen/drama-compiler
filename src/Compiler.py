@@ -15,9 +15,13 @@ from pycparser.c_ast import *
 
 from instructions.Comment import Comment
 from instructions.EndProgram import EndProgram
+from statements.Empty import Empty
 from statements.Declaration import Declaration
 from statements.Function import Function
-from instructions.Instruction import Instruction
+from statements.FunctionCall import FunctionCall
+from statements.Identifier import Identifier
+from statements.MyAssignment import MyAssignment
+from statements.MyConstant import MyConstant
 
 
 class Compiler:
@@ -27,8 +31,7 @@ class Compiler:
         self.structs = set()
         self.functions = []
         self.instructions = []
-        self.global_environment = True # variable indicating whether the instruction is in the global environment or local environment, i.e. in a function
-
+        self.global_environment = True  # variable indicating whether the instruction is in the global environment or local environment, i.e. in a function
 
     def parse(self):
         parser = c_parser.CParser()
@@ -47,61 +50,70 @@ class Compiler:
             ast.show()
             for e in ast.ext:
                 print(type(e))
-                self.build_type(e)
+                s = self.build_type(e)
+                self.instructions.extend(s.get_instructions())
 
     def build_type(self, e):
 
         # Assignment
         if isinstance(e, Assignment):
-            pass
-            # name = self.build_type(e.lvalue)
-            # assignment = Assignment(e.lvalue.name, e.rvalue)
-            # return assignment
+            left = self.build_type(e.lvalue)
+            right = self.build_type(e.rvalue)
+            assignment = MyAssignment(left, right)
+            assignment.add_to_body(right.get_instructions())
+            assignment.add_to_body(left.get_instructions())
+            return assignment
 
         # Declaration
         elif isinstance(e, Decl):
             if isinstance(e.type, TypeDecl):
-                value = None
-                if e.init is not None:
-                    value = self.build_type(e.init)
-                declaration = Declaration(e.name, e.type.type.names[0], value, 1, self.global_environment,
-                                          'register' in e.storage)
+                declaration = Declaration(e.name, 'int', 1, self.global_environment, 'register' in e.storage)
+
+                init_value = e.init
+                if init_value is not None:
+                    s = self.build_type(init_value)
+                    declaration.add_to_body(s.get_instructions())
+
                 if declaration.is_global_variable():
                     self.global_variables.add(declaration)
-                declaration
+                    return Empty()
+                else:
+                    return declaration
             elif isinstance(e.type, ArrayDecl):
                 pass
             elif isinstance(e.type, Struct):
                 declaration = Struct(e.type.name, e.type.decls)
-                declaration
+                return declaration
             else:
-                raise ("Invalid declaration type.")
+                raise Exception("Invalid declaration type.")
 
         # Function
         elif isinstance(e, FuncDef):
             self.global_environment = False
-            function = Function(e.decl.name, e.param_decls, e.body.block_items)
-            for s in e.body.block_items:
-                self.build_type(s)
-            self.global_environment = True
+            function = Function(e.decl.name, e.param_decls)
+            for b in e.body.block_items:
+                s = self.build_type(b)
+                function.add_to_body(s.get_instructions())  # TODO: Local variable declarations must be restored
 
-        # ?
+            # self.functions.append(function)
+            self.global_environment = True
+            return function
+
+        # Identifier
         elif isinstance(e, ID):
-            pass
+            return Identifier(e.name)
 
         # Function call
         elif isinstance(e, FuncCall):
-            if e.name.name == 'getint':  # getint()
-                return Instruction(opcode='LEZ', comment='getint()')
-            else:
-                pass
+            function_call = FunctionCall(e.name.name, e.attr_names)
+            return function_call
 
         # While loop
         elif isinstance(e, While):
             pass
 
         elif isinstance(e, Constant):
-            return e.value
+            return MyConstant(e.value)
 
         # Error
         else:
@@ -110,13 +122,14 @@ class Compiler:
     def build(self):
         # Functions
         for function in self.functions:
-            pass
+            for instruction in function.get_instructions():
+                self.instructions.append(instruction)
 
         # Global variables
         self.instructions.append(Comment("Global variables"))
         self.instructions.append(Comment("----------------"))
         for global_variable in self.global_variables:
-            self.instructions.append(global_variable.get_instructions())
+            self.instructions.extend(global_variable.get_instructions())
 
         # Program termination
         self.instructions.append(EndProgram())

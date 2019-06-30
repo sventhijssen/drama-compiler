@@ -11,7 +11,7 @@ class Instruction:
             self.opcode = str(opcode)
 
         if modus is None:
-            self.modus = ''
+            self.modus = '\t'
         else:
             self.modus = '.' + str(modus)
 
