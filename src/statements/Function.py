@@ -18,6 +18,9 @@ class Function:
 		self.allocation_table = {}
 		self.stack = Stack()
 
+	def is_main(self):
+		return self.name == 'main'
+
 	def _get_declarations(self):
 		"""
 		Returns a list of the declarations in the body of this function.

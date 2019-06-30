@@ -13,6 +13,7 @@ import pickle
 from pycparser import c_parser
 from pycparser.c_ast import *
 
+from ActivationRecord import ActivationRecord
 from instructions.Comment import Comment
 from instructions.EndProgram import EndProgram
 from statements.Empty import Empty
@@ -27,9 +28,10 @@ from statements.MyConstant import MyConstant
 class Compiler:
     def __init__(self, code):
         self.code = code
-        self.global_variables = set()
+        self.global_variables = dict()
         self.structs = set()
-        self.functions = []
+        self.functions = dict()
+        self.activation_records = set()
         self.instructions = []
         self.global_environment = True  # variable indicating whether the instruction is in the global environment or local environment, i.e. in a function
 
@@ -59,7 +61,7 @@ class Compiler:
         if isinstance(e, Assignment):
             left = self.build_type(e.lvalue)
             right = self.build_type(e.rvalue)
-            assignment = MyAssignment(left, right)
+            assignment = MyAssignment(left, right, None)
             assignment.add_to_body(right.get_instructions())
             assignment.add_to_body(left.get_instructions())
             return assignment
@@ -75,7 +77,7 @@ class Compiler:
                     declaration.add_to_body(s.get_instructions())
 
                 if declaration.is_global_variable():
-                    self.global_variables.add(declaration)
+                    self.global_variables[declaration.name] = declaration
                     return Empty()
                 else:
                     return declaration
@@ -91,11 +93,13 @@ class Compiler:
         elif isinstance(e, FuncDef):
             self.global_environment = False
             function = Function(e.decl.name, e.param_decls)
+            activation_record = ActivationRecord(function)
+            self.activation_records.add(activation_record)
             for b in e.body.block_items:
                 s = self.build_type(b)
                 function.add_to_body(s.get_instructions())  # TODO: Local variable declarations must be restored
 
-            # self.functions.append(function)
+            self.functions[function.name] = function
             self.global_environment = True
             return function
 
@@ -120,15 +124,19 @@ class Compiler:
             raise Exception("Unknown statement or expression: " + str(type(e)))
 
     def build(self):
+        # Activation records
+        for activation_record in self.activation_records:
+            self.instructions.extend(activation_record.get_instructions())
+
         # Functions
-        for function in self.functions:
-            for instruction in function.get_instructions():
-                self.instructions.append(instruction)
+        # for function in self.functions.values():
+        #     for instruction in function.get_instructions():
+        #         self.instructions.append(instruction)
 
         # Global variables
         self.instructions.append(Comment("Global variables"))
         self.instructions.append(Comment("----------------"))
-        for global_variable in self.global_variables:
+        for global_variable in self.global_variables.values():
             self.instructions.extend(global_variable.get_instructions())
 
         # Program termination
