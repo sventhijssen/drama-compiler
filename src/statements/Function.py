@@ -13,6 +13,7 @@ class Function:
 	def __init__(self, name, parameters):
 		self.name = name
 		self.parameters = parameters
+		self.local_variables = []
 		self.instructions = []
 		self.body = []
 		self.allocation_table = {}
@@ -20,6 +21,12 @@ class Function:
 
 	def is_main(self):
 		return self.name == 'main'
+
+	def add_local_variable(self, variable):
+		self.local_variables.append(variable)
+
+	def get_local_variables(self):
+		return self.local_variables
 
 	def _get_declarations(self):
 		"""

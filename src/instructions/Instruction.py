@@ -33,7 +33,7 @@ class Instruction:
         if comment is None:
             self.comment = ''
         else:
-            self.comment = '\t| ' + comment
+            self.comment = '\t| ' + str(comment)
 
     def __str__(self):
         return self.name + self.opcode + self.modus + '\t' + self.acc + self.idx + self.operand + self.comment

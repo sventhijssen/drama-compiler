@@ -14,7 +14,9 @@ from pycparser import c_parser
 from pycparser.c_ast import *
 
 from ActivationRecord import ActivationRecord
+from MemoryAllocation import MemoryAllocation
 from instructions.Comment import Comment
+from instructions.EmptyLine import EmptyLine
 from instructions.EndProgram import EndProgram
 from statements.Empty import Empty
 from statements.Declaration import Declaration
@@ -33,7 +35,9 @@ class Compiler:
         self.functions = dict()
         self.activation_records = set()
         self.instructions = []
+        self.memory_allocation = MemoryAllocation()
         self.global_environment = True  # variable indicating whether the instruction is in the global environment or local environment, i.e. in a function
+        self.function_environment = None
 
     def parse(self):
         parser = c_parser.CParser()
@@ -71,6 +75,8 @@ class Compiler:
             if isinstance(e.type, TypeDecl):
                 declaration = Declaration(e.name, 'int', 1, self.global_environment, 'register' in e.storage)
 
+                self.memory_allocation.allocate(declaration, self.function_environment)
+
                 init_value = e.init
                 if init_value is not None:
                     s = self.build_type(init_value)
@@ -80,6 +86,7 @@ class Compiler:
                     self.global_variables[declaration.name] = declaration
                     return Empty()
                 else:
+                    # self.function_environment.add_local_variable(declaration)
                     return declaration
             elif isinstance(e.type, ArrayDecl):
                 pass
@@ -93,6 +100,7 @@ class Compiler:
         elif isinstance(e, FuncDef):
             self.global_environment = False
             function = Function(e.decl.name, e.param_decls)
+            self.function_environment = function
             activation_record = ActivationRecord(function)
             self.activation_records.add(activation_record)
             for b in e.body.block_items:
@@ -101,6 +109,7 @@ class Compiler:
 
             self.functions[function.name] = function
             self.global_environment = True
+            self.function_environment = None
             return function
 
         # Identifier
@@ -126,7 +135,19 @@ class Compiler:
     def build(self):
         # Activation records
         for activation_record in self.activation_records:
-            self.instructions.extend(activation_record.get_instructions())
+            self.instructions.extend(activation_record.get_instructions(self.memory_allocation))
+
+        self.instructions.append(EmptyLine())
+
+        # Local variables
+        for function in self.functions.values():
+            head = 'Lokale variabelen ' + function.name
+            self.instructions.append(Comment(head))
+            self.instructions.append(Comment(''.join('-' for i in range(len(head)))))
+            for local_variable in function.get_local_variables():
+                self.instructions.append(Comment(self.memory_allocation.get_address(local_variable, function)))
+
+
 
         # Functions
         # for function in self.functions.values():
@@ -134,6 +155,7 @@ class Compiler:
         #         self.instructions.append(instruction)
 
         # Global variables
+        self.instructions.append(EmptyLine())
         self.instructions.append(Comment("Global variables"))
         self.instructions.append(Comment("----------------"))
         for global_variable in self.global_variables.values():
