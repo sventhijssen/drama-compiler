@@ -5,5 +5,5 @@ class MyBinaryOperation:
 		self.operation = operation
 		self.instructions = []
 
-	def get_instructions(self):
+	def get_instructions(self, function=None, memory_allocation=None):
 		return self.instructions
