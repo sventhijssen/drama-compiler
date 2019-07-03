@@ -1,5 +1,6 @@
 from functools import reduce
 
+from instructions.EmptyLine import EmptyLine
 from instructions.Instruction import Instruction
 from Stack import Stack
 from instructions.Stop import Stop
@@ -52,7 +53,7 @@ class Function:
 	def add_to_body(self, instructions):
 		self.body.extend(instructions)
 
-	def get_instructions(self):
+	def get_instructions(self, function=None, memory_allocation=None):
 		"""
 		The execution of a method consists of the following steps:
 		a) Allocate space for local variables which are not stored in registers if necessary
@@ -70,8 +71,17 @@ class Function:
 			self.instructions.append(Instruction(opcode="BST", acc="R0"))
 			self.instructions.append(Instruction(opcode="HIA", acc="R8", operand="R9"))
 			self.instructions.append(Instruction(opcode="BST", acc="R0"))
+			self.instructions.append(EmptyLine())
 
 			self.instructions.extend(self.body)
+
+			self.instructions.append(EmptyLine())
+
+			for local_variable in self.get_local_variables():
+				if not local_variable.in_register():
+					self.instructions.append(Instruction(opcode="OPT", modus="w", acc="R9", operand=local_variable.get_size(), comment="variabele " + local_variable.name))
+
+			self.instructions.append(EmptyLine())
 
 			self.instructions.append(Stop())
 

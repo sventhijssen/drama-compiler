@@ -8,7 +8,7 @@ class FunctionCall:
 		self.arguments = arguments
 		self.instructions = []
 
-	def get_instructions(self):
+	def get_instructions(self, function=None, memory_allocation=None):
 		"""
 		Calling a method consists of the steps:
 		a) Save R0, R1 ... if necessary
@@ -25,8 +25,10 @@ class FunctionCall:
 		"""
 
 		if self.name == 'getint':
+			memory_allocation.set_active_register(0)
 			self.instructions.append(Instruction(opcode='LEZ', comment='getint()'))
 		elif self.name == 'printint':
+			memory_allocation.set_active_register(0)
 			self.instructions.append(Instruction(opcode='DRU'))
 		else:
 			# d) Set up environment

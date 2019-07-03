@@ -24,7 +24,7 @@ class Declaration:
     def add_to_body(self, instructions):
         self.instructions.extend(instructions)
 
-    def get_instructions(self):
+    def get_instructions(self, function=None, memory_allocation=None):
         """
         If the register directive is given, we will store it in a register.
         Otherwise, we will either allocate memory if it is a global variable or
@@ -32,7 +32,8 @@ class Declaration:
         :return:
         """
         if self.in_register():
-            return [Instruction(opcode="HIA", modus="w", acc=self.size, comment="")]
+            # return [Instruction(opcode="HIA", modus="w", acc=self.size, comment="")]
+            return []
         elif not self.in_register() and self.is_global_variable():
             return [Instruction(name=self.name, opcode="RESGR", acc=self.size)]
         else:

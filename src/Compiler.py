@@ -15,6 +15,7 @@ from pycparser.c_ast import *
 
 from ActivationRecord import ActivationRecord
 from MemoryAllocation import MemoryAllocation
+from expressions.MyBinaryOperation import MyBinaryOperation
 from instructions.Comment import Comment
 from instructions.EmptyLine import EmptyLine
 from instructions.EndProgram import EndProgram
@@ -25,6 +26,8 @@ from statements.FunctionCall import FunctionCall
 from statements.Identifier import Identifier
 from statements.MyAssignment import MyAssignment
 from statements.MyConstant import MyConstant
+from statements.MyIf import MyIf
+from statements.MyWhile import MyWhile
 
 
 class Compiler:
@@ -65,9 +68,10 @@ class Compiler:
         if isinstance(e, Assignment):
             left = self.build_type(e.lvalue)
             right = self.build_type(e.rvalue)
-            assignment = MyAssignment(left, right, None)
-            assignment.add_to_body(right.get_instructions())
-            assignment.add_to_body(left.get_instructions())
+            assignment = MyAssignment(left, right)
+            assignment.add_to_body(right.get_instructions(self.function_environment, self.memory_allocation))
+            assignment.add_to_body(left.get_instructions(self.function_environment, self.memory_allocation))
+            # assignment.get_instructions(self.function_environment, self.memory_allocation)
             return assignment
 
         # Declaration
@@ -80,7 +84,7 @@ class Compiler:
                 init_value = e.init
                 if init_value is not None:
                     s = self.build_type(init_value)
-                    declaration.add_to_body(s.get_instructions())
+                    declaration.add_to_body(s.get_instructions(self.function_environment, self.memory_allocation))
 
                 if declaration.is_global_variable():
                     self.global_variables[declaration.name] = declaration
@@ -105,7 +109,7 @@ class Compiler:
             self.activation_records.add(activation_record)
             for b in e.body.block_items:
                 s = self.build_type(b)
-                function.add_to_body(s.get_instructions())  # TODO: Local variable declarations must be restored
+                function.add_to_body(s.get_instructions(function, self.memory_allocation))  # TODO: Local variable declarations must be restored
 
             self.functions[function.name] = function
             self.global_environment = True
@@ -123,7 +127,27 @@ class Compiler:
 
         # While loop
         elif isinstance(e, While):
-            pass
+            condition = self.build_type(e.cond)
+            my_while = MyWhile(condition, e.stmt)
+            for b in e.stmt:
+                s = self.build_type(b)
+                my_while.add_to_body(s.get_instructions(self.function_environment, self.memory_allocation))
+            return my_while
+
+        elif isinstance(e, If):
+            condition = self.build_type(e.cond)
+            my_if = MyIf(condition, e.iftrue, e.iffalse)
+            # for b in e.iftrue:
+            #     s = self.build_type(b)
+            #     my_if.add_to_body(s.get_instructions(self.function_environment, self.memory_allocation))
+            # for b in e.iffalse:
+            #     s = self.build_type(b)
+            #     my_if.add_to_body(s.get_instructions(self.function_environment, self.memory_allocation))
+            return my_if
+
+        elif isinstance(e, BinaryOp):
+            my_binary_operation = MyBinaryOperation(e.left, e.right, e.op)
+            return my_binary_operation
 
         elif isinstance(e, Constant):
             return MyConstant(e.value)
@@ -134,6 +158,7 @@ class Compiler:
 
     def build(self):
         # Activation records
+        self.instructions.append(EmptyLine())
         for activation_record in self.activation_records:
             self.instructions.extend(activation_record.get_instructions(self.memory_allocation))
 
@@ -145,7 +170,7 @@ class Compiler:
             self.instructions.append(Comment(head))
             self.instructions.append(Comment(''.join('-' for i in range(len(head)))))
             for local_variable in function.get_local_variables():
-                self.instructions.append(Comment(self.memory_allocation.get_address(local_variable, function)))
+                self.instructions.append(Comment(local_variable.name + ' -> ' + self.memory_allocation.get_address(local_variable, function)))
 
 
 
@@ -156,8 +181,8 @@ class Compiler:
 
         # Global variables
         self.instructions.append(EmptyLine())
-        self.instructions.append(Comment("Global variables"))
-        self.instructions.append(Comment("----------------"))
+        self.instructions.append(Comment("Globale variablen"))
+        self.instructions.append(Comment("-----------------"))
         for global_variable in self.global_variables.values():
             self.instructions.extend(global_variable.get_instructions())
 

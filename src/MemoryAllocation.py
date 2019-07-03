@@ -7,6 +7,15 @@ class MemoryAllocation:
         self.nr_registers = 7
         self.registers = [None for i in range(self.nr_registers)]
         self.variables = dict()
+        self.active_register = None
+
+    def set_active_register(self, register):
+        if register < 0 or register > 6:
+            raise Exception("Register out of bounds.")
+        self.active_register = register
+
+    def get_active_register(self):
+        return self.active_register
 
     def allocate(self, variable, function):
         """
@@ -52,9 +61,41 @@ class MemoryAllocation:
                 return variable.name
             else:
                 # The local variable is stored in the stack of a function
-                m = -2
+                m = -1
                 for local_variable in function.local_variables:
                     if variable == local_variable:
                         return str(m) + '(R8)'
                     else:
                         m -= local_variable.get_size()
+
+    def in_register(self, variable_name):
+        for i in range(self.nr_registers - 1, 0, -1):
+            if self.registers[i] is not None:
+                if self.registers[i].name == variable_name:
+                    return True  # Return register location
+
+    def get_variable_by_name(self, variable_name, function):
+        pass
+
+    def get_address_by_variable_name(self, variable_name, function):
+        """
+        Returns the address of a variable.
+        A variable's address is calculated as follows:
+        a) First, we check whether the variable name is stored in a register and we return the register
+        b) Then, we check whether the variable name is stored in the stack and we return the address
+        c) Otherwise, it is a global variable and we return the name as address
+        :param variable_name:
+        :param function:
+        :return:
+        """
+        for i in range(self.nr_registers - 1, 0, -1):
+            if self.registers[i] is not None:
+                if self.registers[i].name == variable_name:
+                    return 'R' + str(i)  # Return register location
+        m = -1
+        for local_variable in function.get_local_variables():
+            if variable_name == local_variable.name:
+                return str(m) + '(R8)'  # Return stack address
+            else:
+                m -= local_variable.get_size()
+        return variable_name  # Return global variable name
