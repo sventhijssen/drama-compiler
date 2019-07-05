@@ -1,5 +1,6 @@
 from instructions.Instruction import Instruction
 from Stack import Stack
+from instructions.Read import Read
 
 
 class FunctionCall:
@@ -26,7 +27,7 @@ class FunctionCall:
 
 		if self.name == 'getint':
 			memory_allocation.set_active_register(0)
-			self.instructions.append(Instruction(opcode='LEZ', comment='getint()'))
+			self.instructions.append(Read())
 		elif self.name == 'printint':
 			memory_allocation.set_active_register(0)
 			self.instructions.append(Instruction(opcode='DRU'))

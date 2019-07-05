@@ -41,6 +41,7 @@ class Compiler:
         self.memory_allocation = MemoryAllocation()
         self.global_environment = True  # variable indicating whether the instruction is in the global environment or local environment, i.e. in a function
         self.function_environment = None
+        self.move_to_register = False
 
     def parse(self):
         parser = c_parser.CParser()
@@ -118,7 +119,7 @@ class Compiler:
 
         # Identifier
         elif isinstance(e, ID):
-            return Identifier(e.name)
+            return Identifier(e.name, self.move_to_register)
 
         # Function call
         elif isinstance(e, FuncCall):
@@ -147,6 +148,16 @@ class Compiler:
 
         elif isinstance(e, BinaryOp):
             my_binary_operation = MyBinaryOperation(e.left, e.right, e.op)
+            self.move_to_register = True
+            ls = self.build_type(e.left)
+            self.move_to_register = False
+
+            self.move_to_register = True
+            rs = self.build_type(e.right)
+            self.move_to_register = False
+
+            my_binary_operation.add_to_body(ls.get_instructions(self.function_environment, self.memory_allocation))
+            my_binary_operation.add_to_body(rs.get_instructions(self.function_environment, self.memory_allocation))
             return my_binary_operation
 
         elif isinstance(e, Constant):

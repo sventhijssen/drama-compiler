@@ -74,9 +74,6 @@ class MemoryAllocation:
                 if self.registers[i].name == variable_name:
                     return True  # Return register location
 
-    def get_variable_by_name(self, variable_name, function):
-        pass
-
     def get_address_by_variable_name(self, variable_name, function):
         """
         Returns the address of a variable.

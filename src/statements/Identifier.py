@@ -1,6 +1,13 @@
+from instructions.Instruction import Instruction
+
+
 class Identifier:
-    def __init__(self, name):
+    def __init__(self, name, move_to_register=False):
         self.name = name
+        self.move_to_register = move_to_register
+        self.instructions = []
 
     def get_instructions(self, function=None, memory_allocation=None):
-        return []
+        if self.move_to_register and not memory_allocation.in_register(self.name):
+            self.instructions.append(Instruction(opcode="HIA", acc="Rx", operand=self.name))
+        return self.instructions
