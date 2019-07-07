@@ -1,3 +1,6 @@
+from Register import Register
+
+
 class MemoryAllocation:
     def __init__(self):
         """
@@ -12,7 +15,7 @@ class MemoryAllocation:
     def set_active_register(self, register):
         if register < 0 or register > 6:
             raise Exception("Register out of bounds.")
-        self.active_register = register
+        self.active_register = Register(register)
 
     def get_active_register(self):
         return self.active_register
@@ -32,7 +35,7 @@ class MemoryAllocation:
         if variable.in_register():
             for i in range(self.nr_registers-1, 0, -1):
                 if self.registers[i] is None:
-                    self.registers[i] = variable
+                    self.registers[i] = Register(i, variable)
                     self.variables[variable.name] = i
                     if not variable.is_global_variable():
                         function.add_local_variable(variable)
@@ -55,7 +58,7 @@ class MemoryAllocation:
         :return:
         """
         if variable.in_register():
-            return 'R' + str(self.variables[variable.name])  # Return register location
+            return str(self.variables[variable.name])  # Return register location
         else:
             if variable.is_global_variable():
                 return variable.name
@@ -64,7 +67,7 @@ class MemoryAllocation:
                 m = -1
                 for local_variable in function.local_variables:
                     if variable == local_variable:
-                        return str(m) + '(R8)'
+                        return str(m) + str(Register(8))
                     else:
                         m -= local_variable.get_size()
 

@@ -8,6 +8,6 @@ class Identifier:
         self.instructions = []
 
     def get_instructions(self, function=None, memory_allocation=None):
-        if self.move_to_register and not memory_allocation.in_register(self.name):
-            self.instructions.append(Instruction(opcode="HIA", acc="Rx", operand=self.name))
+        if self.move_to_register is not None and not memory_allocation.in_register(self.name):
+            self.instructions.append(Instruction(opcode="HIA", acc=self.move_to_register, operand=self.name))
         return self.instructions

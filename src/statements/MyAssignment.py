@@ -12,7 +12,7 @@ class MyAssignment:
 
 	def get_instructions(self, function=None, memory_allocation=None):
 		left = memory_allocation.get_address_by_variable_name(self.left.name, function)
-		right = 'R' + str(memory_allocation.get_active_register())  # TODO: Not only registers
+		right = str(memory_allocation.get_active_register())  # TODO: Not only registers
 		# right = memory_allocation.get_address_by_variable_name(self.right.name, function)
 
 		if memory_allocation.in_register(self.left.name):

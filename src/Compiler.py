@@ -15,6 +15,7 @@ from pycparser.c_ast import *
 
 from ActivationRecord import ActivationRecord
 from MemoryAllocation import MemoryAllocation
+from Register import Register
 from expressions.MyBinaryOperation import MyBinaryOperation
 from instructions.Comment import Comment
 from instructions.EmptyLine import EmptyLine
@@ -41,7 +42,7 @@ class Compiler:
         self.memory_allocation = MemoryAllocation()
         self.global_environment = True  # variable indicating whether the instruction is in the global environment or local environment, i.e. in a function
         self.function_environment = None
-        self.move_to_register = False
+        self.move_to_register = None
 
     def parse(self):
         parser = c_parser.CParser()
@@ -148,15 +149,13 @@ class Compiler:
 
         elif isinstance(e, BinaryOp):
             my_binary_operation = MyBinaryOperation(e.left, e.right, e.op)
-            self.move_to_register = True
+            self.move_to_register = Register(1)
             ls = self.build_type(e.left)
-            self.move_to_register = False
-
-            self.move_to_register = True
-            rs = self.build_type(e.right)
-            self.move_to_register = False
-
             my_binary_operation.add_to_body(ls.get_instructions(self.function_environment, self.memory_allocation))
+
+            self.move_to_register = Register(2)
+            rs = self.build_type(e.right)
+
             my_binary_operation.add_to_body(rs.get_instructions(self.function_environment, self.memory_allocation))
             return my_binary_operation
 
