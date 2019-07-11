@@ -4,7 +4,8 @@ from instructions.EmptyLine import EmptyLine
 from instructions.Instruction import Instruction
 from Stack import Stack
 from instructions.Stop import Stop
-from statements.Declaration import Declaration
+from statements.MyArrayDeclaration import MyArrayDeclaration
+from statements.MyTypeDeclaration import MyTypeDeclaration
 
 
 class Function:
@@ -34,7 +35,7 @@ class Function:
 		Returns a list of the declarations in the body of this function.
 		:return:
 		"""
-		return filter(lambda s: isinstance(s, Declaration), self.instructions)
+		return filter(lambda s: isinstance(s, MyTypeDeclaration) or isinstance(s, MyArrayDeclaration), self.instructions)
 
 	def _get_declarations_not_in_register(self):
 		"""

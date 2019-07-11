@@ -1,3 +1,4 @@
+from Register import Register
 from instructions.Instruction import Instruction
 from Stack import Stack
 from instructions.Read import Read
@@ -26,10 +27,10 @@ class FunctionCall:
 		"""
 
 		if self.name == 'getint':
-			memory_allocation.set_active_register(0)
+			memory_allocation.set_active_register(Register(0))
 			self.instructions.append(Read())
 		elif self.name == 'printint':
-			memory_allocation.set_active_register(0)
+			memory_allocation.set_active_register(Register(0))
 			self.instructions.append(Instruction(opcode='DRU'))
 		else:
 			# d) Set up environment

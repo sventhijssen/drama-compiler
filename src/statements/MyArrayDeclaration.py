@@ -1,15 +1,14 @@
 from instructions.Instruction import Instruction
-from Stack import Stack
 
 
-class Declaration:
-    def __init__(self, name, variable_type, size, global_variable=True, register=False):
+class MyArrayDeclaration:
+    def __init__(self, name, initial_value, variable_type, size, global_variable=True, register=False):
         self.name = name
+        self.initial_value = initial_value
         self.variable_type = variable_type
         self.global_variable = global_variable
-        self.register = register
+        self.register = False  # Never store in register
         self.size = size
-        self.stack = Stack()
         self.instructions = []
 
     def get_size(self):
@@ -32,9 +31,12 @@ class Declaration:
         :return:
         """
         if self.in_register():
-            # return [Instruction(opcode="HIA", modus="w", acc=self.size, comment="")]
             return []
         elif not self.in_register() and self.is_global_variable():
+            if self.initial_value is not None:
+                values = [e.value for e in self.initial_value.exprs]
+                arg = '; '.join(values)
+                return [Instruction(name=self.name, acc=arg)]
             return [Instruction(name=self.name, opcode="RESGR", acc=self.size)]
         else:
             return [Instruction(opcode="AFT", modus="w", acc="R9", operand="1", comment='variabele ' + self.name)]

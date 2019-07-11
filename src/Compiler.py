@@ -21,13 +21,14 @@ from instructions.Comment import Comment
 from instructions.EmptyLine import EmptyLine
 from instructions.EndProgram import EndProgram
 from statements.Empty import Empty
-from statements.Declaration import Declaration
 from statements.Function import Function
 from statements.FunctionCall import FunctionCall
 from statements.Identifier import Identifier
+from statements.MyArrayDeclaration import MyArrayDeclaration
 from statements.MyAssignment import MyAssignment
 from statements.MyConstant import MyConstant
 from statements.MyIf import MyIf
+from statements.MyTypeDeclaration import MyTypeDeclaration
 from statements.MyWhile import MyWhile
 
 
@@ -79,7 +80,7 @@ class Compiler:
         # Declaration
         elif isinstance(e, Decl):
             if isinstance(e.type, TypeDecl):
-                declaration = Declaration(e.name, 'int', 1, self.global_environment, 'register' in e.storage)
+                declaration = MyTypeDeclaration(e.name, e.init, e.type.type.names[0], 1, self.global_environment, 'register' in e.storage)
 
                 self.memory_allocation.allocate(declaration, self.function_environment)
 
@@ -95,7 +96,20 @@ class Compiler:
                     # self.function_environment.add_local_variable(declaration)
                     return declaration
             elif isinstance(e.type, ArrayDecl):
-                pass
+                if e.init is not None:
+                    init_value = e.init.exprs
+                else:
+                    init_value = []
+                declaration = MyArrayDeclaration(e.name, e.init, e.type.type.type.names[0], len(init_value), self.global_environment)
+
+                if declaration.is_global_variable():
+                    self.global_variables[declaration.name] = declaration
+                    return Empty()
+                else:
+                    # self.function_environment.add_local_variable(declaration)
+                    return declaration
+
+
             elif isinstance(e.type, Struct):
                 declaration = Struct(e.type.name, e.type.decls)
                 return declaration
@@ -149,14 +163,21 @@ class Compiler:
 
         elif isinstance(e, BinaryOp):
             my_binary_operation = MyBinaryOperation(e.left, e.right, e.op)
+
             self.move_to_register = Register(1)
+            self.memory_allocation.set_active_register(self.move_to_register)
             ls = self.build_type(e.left)
             my_binary_operation.add_to_body(ls.get_instructions(self.function_environment, self.memory_allocation))
+            self.move_to_register = None
+            self.memory_allocation.set_active_register(self.move_to_register)
 
             self.move_to_register = Register(2)
+            self.memory_allocation.set_active_register(self.move_to_register)
             rs = self.build_type(e.right)
-
             my_binary_operation.add_to_body(rs.get_instructions(self.function_environment, self.memory_allocation))
+            self.move_to_register = None
+            self.memory_allocation.set_active_register(self.move_to_register)
+
             return my_binary_operation
 
         elif isinstance(e, Constant):

@@ -13,9 +13,9 @@ class MemoryAllocation:
         self.active_register = None
 
     def set_active_register(self, register):
-        if register < 0 or register > 6:
+        if register is not None and (register.number < 0 or register.number > 6):
             raise Exception("Register out of bounds.")
-        self.active_register = Register(register)
+        self.active_register = register
 
     def get_active_register(self):
         return self.active_register
@@ -74,7 +74,7 @@ class MemoryAllocation:
     def in_register(self, variable_name):
         for i in range(self.nr_registers - 1, 0, -1):
             if self.registers[i] is not None:
-                if self.registers[i].name == variable_name:
+                if self.registers[i].value.name == variable_name:
                     return True  # Return register location
 
     def get_address_by_variable_name(self, variable_name, function):
@@ -90,7 +90,7 @@ class MemoryAllocation:
         """
         for i in range(self.nr_registers - 1, 0, -1):
             if self.registers[i] is not None:
-                if self.registers[i].name == variable_name:
+                if self.registers[i].value.name == variable_name:
                     return 'R' + str(i)  # Return register location
         m = -1
         for local_variable in function.get_local_variables():
