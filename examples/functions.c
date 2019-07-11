@@ -1,8 +1,7 @@
 register int v;
 int w;
 int x = 0;
-int y = 3 + 2;
-int s = x + y;
+int y = 5;
 int z[] = {1, 2, 3};
 void a() {
 	int i, j;
