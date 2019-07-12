@@ -1,4 +1,5 @@
 from Register import Register
+from instructions.Instruction import Instruction
 
 
 class MemoryAllocation:
@@ -91,11 +92,26 @@ class MemoryAllocation:
         for i in range(self.nr_registers - 1, 0, -1):
             if self.registers[i] is not None:
                 if self.registers[i].value.name == variable_name:
-                    return 'R' + str(i)  # Return register location
+                    return Register(i)  # Return register location
         m = -1
         for local_variable in function.get_local_variables():
             if variable_name == local_variable.name:
-                return str(m) + '(R8)'  # Return stack address
+                return str(m) + "(" + str(Register(8)) + ")"  # Return stack address
             else:
                 m -= local_variable.get_size()
         return variable_name  # Return global variable name
+
+    def move_to_register(self, register, variable_name, function):
+        address = self.get_address_by_variable_name(variable_name, function)
+        if address != register:
+            return [Instruction(opcode="HIA", acc=register, operand=address)]
+        return []
+
+    def move_to_address(self, register, variable_name, function):
+        address = self.get_address_by_variable_name(variable_name, function)
+        if address != register:
+            if self.in_register(variable_name):
+                return [Instruction(opcode="HIA", acc=address, operand=register)]
+            else:
+                return [Instruction(opcode="BIG", acc=register, operand=address)]
+        return []

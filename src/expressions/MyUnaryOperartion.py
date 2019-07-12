@@ -10,7 +10,7 @@ class MyUnaryOperation:
         :param expression:
         :param operation:
         """
-        self.right = expression
+        self.expression = expression
         self.operation = operation
         self.instructions = []
 
@@ -31,5 +31,7 @@ class MyUnaryOperation:
 
     def get_instructions(self, function=None, memory_allocation=None):
         operator = self._get_operator()
-        self.instructions.append(Instruction(opcode=operator, acc=Register(1), operand=Register(2)))
+        self.instructions.extend(memory_allocation.move_to_register(Register(1), self.expression.name, function))
+        self.instructions.append(Instruction(opcode=operator, modus="w", acc=Register(1), operand=1))
+        self.instructions.extend(memory_allocation.move_to_address(Register(1), self.expression.name, function))
         return self.instructions
