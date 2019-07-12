@@ -17,6 +17,7 @@ from ActivationRecord import ActivationRecord
 from MemoryAllocation import MemoryAllocation
 from Register import Register
 from expressions.MyBinaryOperation import MyBinaryOperation
+from expressions.MyUnaryOperartion import MyUnaryOperation
 from instructions.Comment import Comment
 from instructions.EmptyLine import EmptyLine
 from instructions.EndProgram import EndProgram
@@ -109,7 +110,6 @@ class Compiler:
                     # self.function_environment.add_local_variable(declaration)
                     return declaration
 
-
             elif isinstance(e.type, Struct):
                 declaration = Struct(e.type.name, e.type.decls)
                 return declaration
@@ -183,6 +183,14 @@ class Compiler:
         elif isinstance(e, Constant):
             return MyConstant(e.value)
 
+        elif isinstance(e, ArrayRef):
+            return Empty()
+
+        elif isinstance(e, UnaryOp):
+            expression = self.build_type(e.expr)
+            operation = e.op
+            return MyUnaryOperation(expression, operation)
+
         # Error
         else:
             raise Exception("Unknown statement or expression: " + str(type(e)))
@@ -192,8 +200,7 @@ class Compiler:
         self.instructions.append(EmptyLine())
         for activation_record in self.activation_records:
             self.instructions.extend(activation_record.get_instructions(self.memory_allocation))
-
-        self.instructions.append(EmptyLine())
+            self.instructions.append(EmptyLine())
 
         # Local variables
         for function in self.functions.values():
@@ -202,6 +209,7 @@ class Compiler:
             self.instructions.append(Comment(''.join('-' for i in range(len(head)))))
             for local_variable in function.get_local_variables():
                 self.instructions.append(Comment(local_variable.name + ' -> ' + self.memory_allocation.get_address(local_variable, function)))
+            self.instructions.append(EmptyLine())
 
 
 
@@ -211,7 +219,6 @@ class Compiler:
         #         self.instructions.append(instruction)
 
         # Global variables
-        self.instructions.append(EmptyLine())
         self.instructions.append(Comment("Globale variablen"))
         self.instructions.append(Comment("-----------------"))
         for global_variable in self.global_variables.values():

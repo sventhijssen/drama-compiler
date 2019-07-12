@@ -33,6 +33,11 @@ def main(argv):
     code = compiler.build()
     print(code)
 
+    if outputFileName != "":
+        file = open(outputFileName, "w")
+        file.write(code)
+        file.close()
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])
